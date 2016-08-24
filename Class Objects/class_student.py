@@ -1,12 +1,7 @@
 #-------------------------------------------------------------------------------
 # Name:        Class Object: 'Student'
-# Purpose:
-#
-# Author:      cbrink
-#
+# Purpose:     Practice using class objects...
 # Created:     07/01/2016
-# Copyright:   (c) cbrink 2016
-# Licence:     <your licence>
 #-------------------------------------------------------------------------------
 class Student:
     """
@@ -34,14 +29,14 @@ class Student:
         else:
             self.grades.append('F')
             print(self.name + ' is a ' + self._class + ' and got a F!')
-
+# ------------------------------------------------------------------------------
 def main():
-    student1 = Student('Chris', 'Junior')
+    student1 = Student('John Smith', 'Junior')
     student1.letter_grade(88)
     student1.letter_grade(74)
     student1.letter_grade(93)
     student1.letter_grade(100)
     print(student1.grades)
-
+# ------------------------------------------------------------------------------
 if __name__ == '__main__':
     main()
