@@ -38,13 +38,14 @@ water_leak = r'W:\ArcView Projects\GIS_Asset_Management\CriticalityAssessment\Se
 # ----------------------------------------------------------------------------------------------------------------------
 def get_temps_objids():
     """
-    Read temperature table and retain values.
+    Get temperature objectids based on dates corresponding to water leak dates...
     """
     try:
         pylogger.debug('|BEGIN - ' + os.path.basename(os.path.realpath(__file__)) +
                        ' @ ' + sys._getframe().f_code.co_name + '|\n')
 
         water_leak_fields = [
+            'OBJECTID',
             'break_date',
             'temp_avg_14day_prior',
             'temp_max_14day_prior',
@@ -57,14 +58,13 @@ def get_temps_objids():
             'OBJECTID'
             ]
 
-        temps_obj_ids = []
-
         # Search water leak layer for break dates...
         with arcpy.da.SearchCursor(water_leak, water_leak_fields) as cursor1:
 
             for row1 in cursor1:
 
-                leak_date = row1[0]
+                leak_objid = row1[0]
+                leak_date = row1[1]
 
                 # Search temps table for matching records based on water leak dates...
                 expression = "DATE = date '%s'" % leak_date
@@ -75,9 +75,13 @@ def get_temps_objids():
                         temps_date = row2[0]
                         temps_id = row2[1]
 
-                        temps_obj_ids.append(temps_id)
+                        # Create 14 day prior temperature objectid list...
+                        obj_id_start = int(temps_id) - 14
+                        obj_id_end = int(temps_id) + 1
+                        obj_id_14day_list = [id for id in range(obj_id_start, obj_id_end)]
 
-        temp_calculations(temps_obj_ids)
+                        print(temps_id, obj_id_14day_list)
+                        # temp_calculations(leak_objid, temps_obj_ids)
 
     except RuntimeError:
         # Log error message and send alert text message...
@@ -95,8 +99,10 @@ def get_temps_objids():
         del cursor2
         del row2
 
+
 # ----------------------------------------------------------------------------------------------------------------------
-def temp_calculations(obj_id_list=None):
+def temp_calculations(leak_id=None,
+                      obj_id_list=None):
     """
         Read temperature table and retain values.
         """
@@ -105,26 +111,50 @@ def temp_calculations(obj_id_list=None):
                        ' @ ' + sys._getframe().f_code.co_name + '|\n')
 
         temps_fields = [
+            'OBJECTID',
             'DATE',
-            'OBJECTID'
-        ]
+            'TAVG',
+            'TMIN',
+            'TMAX'
+            ]
 
-        obj_id_14day_list = []
+        # Create 14 day prior average_temps, min_temps, max_temps lists...
+        average_temps = []
+        min_temps = []
+        max_temps = []
 
-        for obj_id in obj_id_list:
-
-            obj_id_start = int(obj_id) - 14
-            obj_id_end = obj_id
+        for id_14 in obj_id_14day_list:
 
             # Search temps table for matching records based on water leak dates...
-            expression = "OBJECTID = '%s'" % obj_id
-            with arcpy.da.SearchCursor(temps_table, temps_fields, where_clause=expression) as cursor2:
+            expression = "OBJECTID = %s" % id_14
+            with arcpy.da.SearchCursor(temps_table, temps_fields, where_clause=expression) as cursor1:
 
-                for row2 in cursor2:
-                    temps_date = row2[0]
-                    temps_id = row2[1]
+                for row1 in cursor1:
 
-                    temps_obj_ids.append(temps_id)
+                    temps_id = row1[0]
+                    temps_date = row1[1]
+                    temps_tavg = row1[2]
+                    temps_tmin = row1[3]
+                    temps_tmax = row1[4]
+
+                    # Populate 14 prior various temp lists...
+                    average_temps.append(temps_tavg)
+                    min_temps.append(temps_tmin)
+                    max_temps.append(temps_tmax)
+
+        print(average_temps, min_temps, max_temps)
+
+            # Temp values to add to water leak dataset...
+            # min_temps.sort()
+            # min_temp = min_temps[0]
+            # max_temp_index = len(max_temps) - 1
+            # max_temp = max_temps[max_temp_index]
+            # range_temp = max_temp - min_temp
+
+    except RuntimeError:
+        # Log error message and send alert text message...
+        pylogger.exception('|FAIL - ' + os.path.basename(os.path.realpath(__file__)) +
+                           ' @ ' + sys._getframe().f_code.co_name + '|\n')
 
 
 # ----------------------------------------------------------------------------------------------------------------------
