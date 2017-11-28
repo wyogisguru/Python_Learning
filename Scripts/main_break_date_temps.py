@@ -14,7 +14,6 @@ import sys
 import gc
 import time
 from arcpy import env
-count = 0
 # ----------------------------------------------------------------------------------------------------------------------
 # Pylogger setup..
 iLog = r'D:\python\logs\DSU_2.0_Info.log'
@@ -54,7 +53,6 @@ def get_temps_objids():
             ]
 
         temps_fields = [
-            'DATE',
             'OBJECTID'
             ]
 
@@ -72,17 +70,18 @@ def get_temps_objids():
 
                     for row2 in cursor2:
 
-                        temps_date = row2[0]
-                        temps_id = row2[1]
+                        temps_id = row2[0]
 
                         # Create 14 day prior temperature objectid list...
                         obj_id_start = int(temps_id) - 14
                         obj_id_end = int(temps_id) + 1
                         obj_id_14day_list = [id for id in range(obj_id_start, obj_id_end)]
 
-                        print(temps_id, obj_id_14day_list)
-                        # temp_calculations(leak_objid, temps_obj_ids)
+                        temp_values = temp_calculations(leak_objid, obj_id_14day_list)
 
+                        print(leak_objid, temp_values)
+
+                break
     except RuntimeError:
         # Log error message and send alert text message...
         pylogger.exception('|FAIL - ' + os.path.basename(os.path.realpath(__file__)) +
@@ -102,7 +101,7 @@ def get_temps_objids():
 
 # ----------------------------------------------------------------------------------------------------------------------
 def temp_calculations(leak_id=None,
-                      obj_id_list=None):
+                      objid_temp_days_list=None):
     """
         Read temperature table and retain values.
         """
@@ -111,8 +110,6 @@ def temp_calculations(leak_id=None,
                        ' @ ' + sys._getframe().f_code.co_name + '|\n')
 
         temps_fields = [
-            'OBJECTID',
-            'DATE',
             'TAVG',
             'TMIN',
             'TMAX'
@@ -123,33 +120,34 @@ def temp_calculations(leak_id=None,
         min_temps = []
         max_temps = []
 
-        for id_14 in obj_id_14day_list:
+        for id_temp_day in objid_temp_days_list:
 
             # Search temps table for matching records based on water leak dates...
-            expression = "OBJECTID = %s" % id_14
+            expression = "OBJECTID = %s" % id_temp_day
             with arcpy.da.SearchCursor(temps_table, temps_fields, where_clause=expression) as cursor1:
 
                 for row1 in cursor1:
 
-                    temps_id = row1[0]
-                    temps_date = row1[1]
-                    temps_tavg = row1[2]
-                    temps_tmin = row1[3]
-                    temps_tmax = row1[4]
+                    temps_tavg = row1[0]
+                    temps_tmin = row1[1]
+                    temps_tmax = row1[2]
 
                     # Populate 14 prior various temp lists...
                     average_temps.append(temps_tavg)
                     min_temps.append(temps_tmin)
                     max_temps.append(temps_tmax)
 
-        print(average_temps, min_temps, max_temps)
+        # Temp values to add to water leak dataset...
+        min_temps.sort()
+        min_temp = min_temps[0]
+        max_temps.sort()
+        max_temp_index = len(max_temps) - 1
+        max_temp = max_temps[max_temp_index]
+        range_temp = max_temp - min_temp
+        average_temp = sum(average_temps) / len(average_temps)
 
-            # Temp values to add to water leak dataset...
-            # min_temps.sort()
-            # min_temp = min_temps[0]
-            # max_temp_index = len(max_temps) - 1
-            # max_temp = max_temps[max_temp_index]
-            # range_temp = max_temp - min_temp
+        # Return min_temp, max_temp, range_temp, average_temp values...
+        return min_temp, max_temp, range_temp, average_temp
 
     except RuntimeError:
         # Log error message and send alert text message...
@@ -187,7 +185,7 @@ def main():
             # Start an edit operation...
             edit.startOperation()
 
-        except:
+        except RuntimeError:
             # Log to console; log info message...
             pylogger.debug('Failed at "startOperation". Ending program...')
             pylogger.exception('FAIL - @ main - edit.startOperation()')
@@ -199,13 +197,13 @@ def main():
         edit.stopOperation()
 
         # Nested 'try' statement handles scenario where fielbopu version is
-        # being edited simulataneously by 2 or more users and
+        # being edited simultaneously by 2 or more users and
         # saving edits fails...
         try:
             # Try to stop edit session and save edits...
             edit.stopEditing(True)
 
-        except:
+        except RuntimeError:
             # Log to console; log info message...
             pylogger.debug('Failed at "stopEditing". Ending program...')
             pylogger.exception('FAIL - WaterLeakDSU_da_Cursor_Arcpy.py @ main - ' +
