@@ -28,10 +28,9 @@ format_current_time = current_time.strftime("%Y-%m-%d %H:%M:%S %p")
 qaqc_time_start = current_time.strftime("%Y-%m-%d 17:00:00 PM")
 
 # Set workspace....
-workspace = r'W:\ArcView Projects\GIS_Asset_Management\CriticalityAssessment\Sensitivity Analysis\20171122_GIS_Sensitivity_Analysis\20171122_GIS_Sensitivity_Analysis.gdb'
-temps_table = r'W:\ArcView Projects\GIS_Asset_Management\CriticalityAssessment\Sensitivity Analysis\20171122_GIS_Sensitivity_Analysis\20171122_GIS_Sensitivity_Analysis.gdb\TempsDaily_98_17'
-temps_table_ids = r'W:\ArcView Projects\GIS_Asset_Management\CriticalityAssessment\Sensitivity Analysis\20171122_GIS_Sensitivity_Analysis\20171122_GIS_Sensitivity_Analysis.gdb\temps_ids'
-water_leak = r'W:\ArcView Projects\GIS_Asset_Management\CriticalityAssessment\Sensitivity Analysis\20171122_GIS_Sensitivity_Analysis\20171122_GIS_Sensitivity_Analysis.gdb\active_leaks_join_copy'
+workspace = r'W:\ArcView Projects\GIS_Asset_Management\CriticalityAssessment\Sensitivity Analysis\20171122_GIS_Sensitivity_Analysis_Exploratory_Data\20171122_GIS_Sensitivity_Analysis.gdb'
+temps_table = r'W:\ArcView Projects\GIS_Asset_Management\CriticalityAssessment\Sensitivity Analysis\20171122_GIS_Sensitivity_Analysis_Exploratory_Data\20171122_GIS_Sensitivity_Analysis.gdb\TempsDaily_98_17'
+water_leak = r'W:\ArcView Projects\GIS_Asset_Management\CriticalityAssessment\Sensitivity Analysis\20171122_GIS_Sensitivity_Analysis_Exploratory_Data\20171122_GIS_Sensitivity_Analysis.gdb\active_leaks_data'
 
 
 # ----------------------------------------------------------------------------------------------------------------------
