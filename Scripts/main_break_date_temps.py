@@ -65,8 +65,8 @@ def get_temps_objids():
                 leak_date = row1[1]
 
                 # Search temps table for matching records based on water leak dates...
-                expression = "DATE = date '%s'" % leak_date
-                with arcpy.da.SearchCursor(temps_table, temps_fields, where_clause=expression) as cursor2:
+                expression2 = "DATE = date '%s'" % leak_date
+                with arcpy.da.SearchCursor(temps_table, temps_fields, where_clause=expression2) as cursor2:
 
                     for row2 in cursor2:
 
@@ -77,11 +77,30 @@ def get_temps_objids():
                         obj_id_end = int(temps_id) + 1
                         obj_id_14day_list = [id for id in range(obj_id_start, obj_id_end)]
 
-                        temp_values = temp_calculations(leak_objid, obj_id_14day_list)
+                # Update water leak with temp values...
+                expression3 = "OBJECTID = %s" % leak_objid
+                with arcpy.da.UpdateCursor(water_leak, water_leak_fields, where_clause=expression3) as cursor3:
+
+                    for row3 in cursor3:
+
+                        # Get temp values (min, max, range, average)...
+                        temp_values = temp_calculations(obj_id_14day_list)
+
+                        row3[2] = temp_values[3]  # Temp average...
+                        cursor3.updateRow(row3)
+
+                        row3[3] = temp_values[1]  # Temp max...
+                        cursor3.updateRow(row3)
+
+                        row3[4] = temp_values[0]  # Temp min...
+                        cursor3.updateRow(row3)
+
+                        row3[5] = temp_values[2]  # Temp range...
+                        cursor3.updateRow(row3)
 
                         print(leak_objid, temp_values)
+                        pylogger.info('Leak %s updated! (temps: average, max, min, range)\n' % leak_objid)
 
-                break
     except RuntimeError:
         # Log error message and send alert text message...
         pylogger.exception('|FAIL - ' + os.path.basename(os.path.realpath(__file__)) +
@@ -92,16 +111,17 @@ def get_temps_objids():
         row1 = None
         cursor2 = None
         row2 = None
+        cursor3 = None
 
         del cursor1
         del row1
         del cursor2
         del row2
+        del cursor3
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def temp_calculations(leak_id=None,
-                      objid_temp_days_list=None):
+def temp_calculations(objid_temp_days_list=None):
     """
         Read temperature table and retain values.
         """
